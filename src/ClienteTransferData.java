@@ -45,20 +45,24 @@ class ClienteTransferData
             dout.writeUTF("Archivo no encontrado");
             return;
         }
+        
         //Se envía el nombre del archivo
         dout.writeUTF(archivo);
         
         //Espera mensaje del servidor para ver si existe ya el archivo
         String msgDeServer=din.readUTF();
+        
         //Verificamos que el mensaje recibido es el de archivo existente
         if(msgDeServer.compareTo("Archivo existente")==0){
             String Opcion;
             System.out.println("El archivo ya existe. ¿Desea sobreescribirlo (S/N) ?");
             Opcion=br.readLine();            
             if(Opcion=="S"){
+            	
             	//si la opcion es de sobreeesribir, continuamos la ejecución
                 dout.writeUTF("S");
             }else{
+            	
             	//Sino, la terminamos
                 dout.writeUTF("N");
                 return;
@@ -66,6 +70,7 @@ class ClienteTransferData
         }
         //Compienza el envío del archivo
         System.out.println("Enviando archivo ...");
+        
         //Se crea el stream que leerá el archivo del ordenador a la aplicación
         FileInputStream fin=new FileInputStream(f);
         
@@ -75,12 +80,15 @@ class ClienteTransferData
         {
         	//Se lee el fichero de 4 en 4 bytes
         	ch=fin.read();
+        	
         	//Se envía al servidor
             dout.writeUTF(String.valueOf(ch));
         }
         while(ch!=-1);
+        
         //Se cierra el stream del archivo
         fin.close();
+        
         //Se recibe la última confirmación por parte del servidor
         System.out.println(din.readUTF());
         
