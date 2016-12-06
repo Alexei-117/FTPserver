@@ -14,7 +14,9 @@ class ClienteTransferData
     DataInputStream din;
     DataOutputStream dout;
     BufferedReader br;
-    ClienteTransferData(Socket soc)
+    
+    //Constructor que recibe el socket de la conexion e iniciliza los datos
+    public ClienteTransferData(Socket soc)
     {
         try
         {
@@ -27,127 +29,150 @@ class ClienteTransferData
         {
         }        
     }
-    void SendFile() throws Exception
-    {        
-        
-        String filename;
+    //Función que recibe los datos
+    void EnviarData() throws Exception
+    {   
+    	//Se pide la ruta del fichero
+        String archivo;
         System.out.print("Escriba el nombre del fichero :");
-        filename=br.readLine();
-            
-        File f=new File(filename);
+        archivo=br.readLine();
+        
+        //Se crea el objeto fichero y se verifica su existencia
+        File f=new File(archivo);
         if(!f.exists())
         {
             System.out.println("El fichero no existe...");
-            dout.writeUTF("Error");
+            dout.writeUTF("Error 404: el fichero no existe");
             return;
         }
+        //Se envía el nombre del archivo
+        dout.writeUTF(archivo);
         
-        dout.writeUTF(filename);
-        
-        String msgFromServer=din.readUTF();
-        if(msgFromServer.compareTo("File Already Exists")==0)
-        {
-            String Option;
-            System.out.println("File Already Exists. Want to OverWrite (Y/N) ?");
-            Option=br.readLine();            
-            if(Option=="Y")    
-            {
-                dout.writeUTF("Y");
-            }
-            else
-            {
+        //Espera mensaje del servidor para ver si existe ya el archivo
+        String msgDeServer=din.readUTF();
+        //Verificamos que el mensaje recibido es el de archivo existente
+        if(msgDeServer.compareTo("Archivo existente")==0){
+            String Opcion;
+            System.out.println("El archivo ya existe. ¿Desea sobreescribirlo (S/N) ?");
+            Opcion=br.readLine();            
+            if(Opcion=="S"){
+            	//si la opcion es de sobreeesribir, continuamos la ejecución
+                dout.writeUTF("S");
+            }else{
+            	//Sino, la terminamos
                 dout.writeUTF("N");
                 return;
             }
         }
-        
-        System.out.println("Sending File ...");
+        //Compienza el envío del archivo
+        System.out.println("Enviando archivo ...");
+        //Se crea el stream que leerá el archivo del ordenador a la aplicación
         FileInputStream fin=new FileInputStream(f);
+        
+        //Se escribe hasta final de archivo
         int ch;
         do
         {
-            ch=fin.read();
+        	//Se lee el fichero de 4 en 4 bytes
+        	ch=fin.read();
+        	//Se envía al servidor
             dout.writeUTF(String.valueOf(ch));
         }
         while(ch!=-1);
+        //Se cierra el stream del archivo
         fin.close();
+        //Se recibe la última confirmación por parte del servidor
         System.out.println(din.readUTF());
         
     }
     
-    void ReceiveFile() throws Exception
+    void RecibirData() throws Exception
     {
-        String fileName;
-        System.out.print("Enter File Name :");
-        fileName=br.readLine();
-        dout.writeUTF(fileName);
-        String msgFromServer=din.readUTF();
+        String archivo;
+        System.out.print("Escriba el nombre del fichero :");
+        archivo=br.readLine();
+        //Lee el nombre del fichero y la envía al servidor
+        dout.writeUTF(archivo);
         
-        if(msgFromServer.compareTo("File Not Found")==0)
-        {
-            System.out.println("File not found on Server ...");
+        //Recibe el mensaje del servidor con el estado del envío
+        String msgDeServer=din.readUTF();
+        
+        //Si no está encontrado, termina la ejecución
+        if(msgDeServer.compareTo("Archivo no encontrado")==0){
+            System.out.println("Error 404: Archivo no encontrado en el servidor ...");
             return;
+        }else{
+        	//Espera a la confirmación del servidor de que el archivo está listo
+        	if(msgDeServer.compareTo("Preparado")==0){
+	            System.out.println("Recibiendo Archivo ...");
+	            File f=new File(archivo);
+	            
+	            //Si el archivo ya existe
+	            if(f.exists())
+	            {
+	                String opcion;
+	                System.out.println("El archivo ya existe. ¿Desea sobreescribirlo (S/N) ?");
+	                opcion=br.readLine(); 
+	                
+	                //Si no desea sobreescribirlo, se borra el flujo de datos y se acaba la ejecución
+	                if(opcion=="N")    
+	                {
+	                    dout.flush();
+	                    return;    
+	                }                
+	            }
+	            //Se crea un File Output para escribir el archivo recibido en el ordenador
+	            FileOutputStream fout=new FileOutputStream(f);
+	            int ch;
+	            //string que almacena temporalmente el archivo
+	            String temp;
+	            do
+	            {
+	            	//Lee el archivo por el DataInputStream
+	                temp=din.readUTF();
+	                ch=Integer.parseInt(temp);
+	                
+	               //Escribe hasta que no es el final de documento
+	                if(ch!=-1)
+	                {
+	                    fout.write(ch);                    
+	                }
+	                //Va escribiendo hasta llegar al final
+	            }while(ch!=-1);
+	            
+	            //Cierra el stream que conecta con el ordenador
+	            fout.close();
+	            System.out.println(din.readUTF());
+	                
+	        }
         }
-        elseif(msgFromServer.compareTo("READY")==0)
-        {
-            System.out.println("Receiving File ...");
-            File f=new File(fileName);
-            if(f.exists())
-            {
-                String Option;
-                System.out.println("File Already Exists. Want to OverWrite (Y/N) ?");
-                Option=br.readLine();            
-                if(Option=="N")    
-                {
-                    dout.flush();
-                    return;    
-                }                
-            }
-            FileOutputStream fout=new FileOutputStream(f);
-            int ch;
-            String temp;
-            do
-            {
-                temp=din.readUTF();
-                ch=Integer.parseInt(temp);
-                if(ch!=-1)
-                {
-                    fout.write(ch);                    
-                }
-            }while(ch!=-1);
-            fout.close();
-            System.out.println(din.readUTF());
-                
-        }
-        
         
     }
 
     public void displayMenu() throws Exception
     {
+    	//Menú simple con las opciones básicas de recibir y enviar archivo
         while(true)
         {    
-            System.out.println("[ MENU ]");
-            System.out.println("1. Send File");
-            System.out.println("2. Receive File");
-            System.out.println("3. Exit");
-            System.out.print("\nEnter Choice :");
-            int choice;
-            choice=Integer.parseInt(br.readLine());
-            if(choice==1)
-            {
-                dout.writeUTF("SEND");
-                SendFile();
+            System.out.println("[ MENÚ ]");
+            System.out.println("1. Enviar archivo");
+            System.out.println("2. Recibir archivo");
+            System.out.println("3. Salir");
+            System.out.print("\n Elija una opción :");
+            int eleccion;
+            eleccion=Integer.parseInt(br.readLine());
+            if(eleccion==1){
+                dout.writeUTF("ENVIAR");
+                EnviarData();
             }
-            elseif(choice==2)
-            {
-                dout.writeUTF("GET");
-                ReceiveFile();
-            }
-            else
-            {
-                dout.writeUTF("DISCONNECT");
-                System.exit(1);
+            else{
+            	if(eleccion==2){
+	                dout.writeUTF("RECOGER");
+	                RecibirData();
+	            }else{
+	                dout.writeUTF("DESCONECTAR");
+	                System.exit(1);
+	            }
             }
         }
     }
