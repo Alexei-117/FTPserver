@@ -160,28 +160,52 @@ class ClienteTransferData
     public void displayMenu() throws Exception
     {
     	//Menú simple con las opciones básicas de recibir y enviar archivo
-        while(true)
-        {    
-            System.out.println("[ MENÚ ]");
-            System.out.println("1. Enviar archivo");
-            System.out.println("2. Recibir archivo");
-            System.out.println("3. Salir");
-            System.out.print("\n Elija una opción :");
-            int eleccion;
-            eleccion=Integer.parseInt(br.readLine());
-            if(eleccion==1){
-                dout.writeUTF("ENVIAR");
-                EnviarData();
-            }
-            else{
-            	if(eleccion==2){
-	                dout.writeUTF("RECOGER");
-	                RecibirData();
-	            }else{
-	                dout.writeUTF("DESCONECTAR");
-	                System.exit(1);
+    	
+    	/*Primero debe de hacer el login aquí, y si IF es certero, devuelve a este menú
+    	 * Rudimentario que se modificará posteriormente
+    	 * */
+    	boolean login=true;
+    	
+    	//Las entradas de datos
+    	System.out.println("[ Login ]");
+    	dout.writeUTF("LOGIN");
+        System.out.println("Inserte el usuario:");
+        String user=br.readLine();
+        System.out.println("Inserte la contraseña");
+        String pass=br.readLine();
+        
+        //Envío de la información al servidor
+        dout.writeUTF(user);
+        dout.writeUTF(pass);
+        
+    	//El if de comprobación que lleva a los diferentes menús
+    	if(login){
+	        while(true)
+	        {    
+	            System.out.println("[ MENÚ ]");
+	            System.out.println("1. Enviar archivo");
+	            System.out.println("2. Recibir archivo");
+	            System.out.println("3. Salir");
+	            System.out.print("\n Elija una opción :");
+	            int eleccion;
+	            eleccion=Integer.parseInt(br.readLine());
+	            if(eleccion==1){
+	                dout.writeUTF("ENVIAR");
+	                EnviarData();
 	            }
-            }
-        }
+	            else{
+	            	if(eleccion==2){
+		                dout.writeUTF("RECOGER");
+		                RecibirData();
+		            }else{
+		                dout.writeUTF("DESCONECTAR");
+		                System.exit(1);
+		            }
+	            }
+	        }
+    	}else{
+    		//Aquí muestra el mensaje de login fallido, vuélvalo a intentar
+    		System.exit(1);
+    	}
     }
 }

@@ -1,6 +1,7 @@
 import java.net.*;
 import java.io.*;
 import java.util.*;
+import javax.net.ssl.HttpsURLConnection;
 
 public class DataTransfer extends Thread {
 
@@ -126,6 +127,63 @@ public class DataTransfer extends Thread {
 
 	}
 
+	public boolean login() throws Exception{
+		//leemos las variables por parte del usuario
+		String user=din.readUTF();
+		String pass=din.readUTF();
+		
+		//Creamos la url que nos llevará a nuestro servidor local con la base de datos
+		String url = "localhost:8080//FTPserver//index.php";
+		URL obj = new URL(url);
+		HttpsURLConnection con = (HttpsURLConnection) obj.openConnection();
+
+		//añade el header al Post, que es la información meta de la petición
+		con.setRequestMethod("POST");
+		con.setRequestProperty("User-Agent", "Mozilla\5.0");
+		con.setRequestProperty("Accept-Language", "en-US,en;q=0.5");
+
+		//aquí añadimos los valores del string que pasaremos por el post
+		String urlParametros = "user="+user+"&pass="+pass;
+
+		// Enviar la petición del post
+		//Primero confirma que se puede realizar dicho envio
+		con.setDoOutput(true);
+		
+		//Genera el output stream para poder escribir en la dirección del post
+		DataOutputStream wr = new DataOutputStream(con.getOutputStream());
+		
+		//Manda los parámetros
+		wr.writeBytes(urlParametros);
+		wr.flush();
+		wr.close();
+
+		//Respuesta por parte de la base de datos/servidor local en valor de int
+		//Supongo que se referirá a error 404 y tal
+		int respuestaCod = con.getResponseCode();
+		System.out.println("Señal del servidor : " + respuestaCod);
+
+		//Lee la respuesta generada por el PHP como si fuera una página web
+		BufferedReader in = new BufferedReader(
+		        new InputStreamReader(con.getInputStream()));
+		String linea;
+		StringBuffer respuesta = new StringBuffer();
+
+		while ((linea = in.readLine()) != null) {
+			respuesta.append(linea);
+		}
+		in.close();
+		String login=respuesta.toString();
+		
+		//Ahora tratamos la respuesta por parte del codigo, en este caso,
+		//Si la respuesta es correcta, devolvemos que el login ha sido correcto
+		boolean logueo=false;
+		if(login.contains("Login correcto")){
+			logueo=true;
+		}
+		
+		//Devolvemos el resultado de la comparación
+		return logueo;
+	}
 
 	public void run()
 	{
@@ -137,25 +195,36 @@ public class DataTransfer extends Thread {
 			{
 				System.out.println("Esperando comando ...");
 				String comando=din.readUTF();
-				if(comando.compareTo("RECOGER")==0){
+				if(comando.compareTo("LOGIN")==0){
 					System.out.println("\t RECOGER Comando recibido ...");
-					EnviarData();
+					if(login()){
+						dout.writeUTF("LOGIN CORRECTO");
+					}else{
+						dout.writeUTF("LOGIN FALLIDO");
+					}
 					continue;
-				}else{ 
-					if(comando.compareTo("ENVIAR")==0){
-						System.out.println("\t ENVIAR Comando recibido ...");                
-						RecibirData();
+				}else{
+					if(comando.compareTo("RECOGER")==0){
+						System.out.println("\t RECOGER Comando recibido ...");
+						EnviarData();
 						continue;
 					}else{ 
-						if(comando.compareTo("DESCONECTAR")==0){
-							System.out.println("\t DESCONECTAR Comando recibido ...");
-							System.exit(1);
+						if(comando.compareTo("ENVIAR")==0){
+							System.out.println("\t ENVIAR Comando recibido ...");                
+							RecibirData();
+							continue;
+						}else{ 
+							if(comando.compareTo("DESCONECTAR")==0){
+								System.out.println("\t DESCONECTAR Comando recibido ...");
+								System.exit(1);
+							}
 						}
 					}
 				}
 			}
 			catch(Exception ex)
 			{
+				ex.printStackTrace();
 			}
 		}
 	}
