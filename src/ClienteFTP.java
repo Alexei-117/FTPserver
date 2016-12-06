@@ -7,7 +7,7 @@ class ClienteFTP
 {
     public static void main(String args[]) throws Exception
     {
-        Socket soc=new Socket("127.0.0.1",5217);
+        Socket soc=new Socket("SteamMachine",5218);
         ClienteTransferData t=new ClienteTransferData(soc);
         t.displayMenu();
         

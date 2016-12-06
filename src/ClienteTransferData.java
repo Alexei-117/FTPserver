@@ -41,8 +41,8 @@ class ClienteTransferData
         File f=new File(archivo);
         if(!f.exists())
         {
-            System.out.println("El fichero no existe...");
-            dout.writeUTF("Error 404: el fichero no existe");
+            System.out.println("Error 404: El fichero no existe...");
+            dout.writeUTF("Archivo no encontrado");
             return;
         }
         //Se envía el nombre del archivo

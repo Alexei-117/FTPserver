@@ -7,7 +7,7 @@ public class ServidorFTP {
 
 	public static void main(String args[]) throws Exception
 	{
-		ServerSocket soc=new ServerSocket(5217);
+		ServerSocket soc=new ServerSocket(5218);
 		System.out.println("Servidor FTP comenzo en el puerto numero 5217");
 		while(true)
 		{
