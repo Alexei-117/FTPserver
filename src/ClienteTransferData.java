@@ -7,6 +7,10 @@ import java.io.FileOutputStream;
 import java.io.InputStreamReader;
 import java.net.Socket;
 
+//Cositas de Nacho
+import javax.swing.*;
+import java.awt.*;
+
 class ClienteTransferData
 {
     Socket ClientSoc;
@@ -156,7 +160,9 @@ class ClienteTransferData
         }
         
     }
-
+    public class gui{
+    	JButton b1=new JButton("Login");
+    }
     public void displayMenu() throws Exception
     {
     	//Menú simple con las opciones básicas de recibir y enviar archivo
@@ -166,6 +172,8 @@ class ClienteTransferData
     	 * */
     	boolean login=true;
     	
+    	
+    	
     	//Las entradas de datos
     	System.out.println("[ Login ]");
     	dout.writeUTF("LOGIN");
@@ -174,10 +182,18 @@ class ClienteTransferData
         System.out.println("Inserte la contraseña");
         String pass=br.readLine();
         
+        //Cositas Nacho
+        JPanel p=new JPanel();
+        
         //Envío de la información al servidor
         dout.writeUTF(user);
         dout.writeUTF(pass);
         
+        //Esperamos la respuesta del servidor
+        String respuesta=din.readUTF();
+        if(respuesta.compareTo("LOGIN CORRECTO")==0){
+        	login=true;
+        }
     	//El if de comprobación que lleva a los diferentes menús
     	if(login){
 	        while(true)
