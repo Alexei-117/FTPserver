@@ -68,12 +68,13 @@ public class DataTransfer extends Thread {
 	void RecibirData() throws Exception
 	{
 		//Lee el mensaje del cliente
-		String[] rutaString=din.readUTF().split("\\");
+		String leer=din.readUTF();
+		String[] rutaString=leer.split("\\\\");
 		String ruta=rutaString[rutaString.length-1];
-		String archivo="C:\\xampp\\htdocs\\FTPServer\\"+nusuario+"\\"+ruta;
+		String archivo="C:\\xampp\\htdocs\\FTPServer\\"+ruta;
 		
 		//Si el archivo no ha sido encontrado por parte del cliente, entonces acabamos la ejecución
-		if(archivo.compareTo("Archivo no encontrado")==0)
+		if(leer.compareTo("Archivo no encontrado")==0)
 		{
 			return;
 		}
@@ -133,7 +134,6 @@ public class DataTransfer extends Thread {
 		//leemos las variables por parte del usuario
 		String user=din.readUTF();
 		String pass=din.readUTF();
-        System.out.println("Se han recibido los parámetros");
 		
 		//Creamos la url que nos llevará a nuestro servidor local con la base de datos
 		String url = "http://localhost/FTPserver/index.php";
@@ -204,6 +204,7 @@ public class DataTransfer extends Thread {
 						dout.writeUTF("LOGIN CORRECTO");
 					}else{
 						dout.writeUTF("LOGIN FALLIDO");
+						System.exit(1);
 					}
 					continue;
 				}else{
