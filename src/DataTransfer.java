@@ -131,14 +131,15 @@ public class DataTransfer extends Thread {
 		//leemos las variables por parte del usuario
 		String user=din.readUTF();
 		String pass=din.readUTF();
+        System.out.println("Se han recibido los parámetros");
 		
 		//Creamos la url que nos llevará a nuestro servidor local con la base de datos
-		String url = "localhost:8080//FTPserver//index.php";
+		String url = "http://localhost/FTPserver/index.php";
 		URL obj = new URL(url);
-		HttpsURLConnection con = (HttpsURLConnection) obj.openConnection();
+		URLConnection con = obj.openConnection();
 
 		//añade el header al Post, que es la información meta de la petición
-		con.setRequestMethod("POST");
+		con.setRequestProperty("Method","POST");
 		con.setRequestProperty("User-Agent", "Mozilla\5.0");
 		con.setRequestProperty("Accept-Language", "en-US,en;q=0.5");
 
@@ -159,8 +160,8 @@ public class DataTransfer extends Thread {
 
 		//Respuesta por parte de la base de datos/servidor local en valor de int
 		//Supongo que se referirá a error 404 y tal
-		int respuestaCod = con.getResponseCode();
-		System.out.println("Señal del servidor : " + respuestaCod);
+		//int respuestaCod = con.getResponseCode();
+		//System.out.println("Señal del servidor : " + respuestaCod);
 
 		//Lee la respuesta generada por el PHP como si fuera una página web
 		BufferedReader in = new BufferedReader(
