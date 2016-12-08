@@ -1,6 +1,13 @@
 import java.net.*;
+import java.security.Key;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
 import java.io.*;
 import java.util.*;
+
+import javax.crypto.Cipher;
+import javax.crypto.KeyGenerator;
+import javax.crypto.spec.SecretKeySpec;
 import javax.net.ssl.HttpsURLConnection;
 
 public class DataTransfer extends Thread {
@@ -10,11 +17,21 @@ public class DataTransfer extends Thread {
 	DataInputStream din;
 	DataOutputStream dout;
 	
+	//Variables de seguridad
+	private Key publicRSAKey;
+	private Key privateRSAKey;
+	private Key AESKey;
+	
 	//Crea los streams de entrada y salida con el socket pasado por parámetro
 	public DataTransfer(Socket soc)
 	{
 		try
 		{
+            publicRSAKey=null;
+            privateRSAKey=null;
+            AESKey=null;
+            generarRSA();
+            generarAES();
 			ClientSoc=soc;                        
 			din=new DataInputStream(ClientSoc.getInputStream());
 			dout=new DataOutputStream(ClientSoc.getOutputStream());
@@ -130,6 +147,39 @@ public class DataTransfer extends Thread {
 
 	}
 
+    public void generarRSA() throws Exception{
+    	
+    	KeyPairGenerator kpg=KeyPairGenerator.getInstance("RSA");
+    	kpg.initialize(1024);
+    	KeyPair kp=kpg.genKeyPair();
+    	publicRSAKey = kp.getPublic();
+    	privateRSAKey = kp.getPrivate();
+    	
+    }
+    
+    public void generarAES() throws Exception{
+    	
+    	KeyGenerator keygen =KeyGenerator.getInstance("AES");
+    	keygen.init(128);
+    	AESKey=keygen.generateKey();
+    	
+    }
+    
+    public void solicitarClave() throws Exception{
+    	Cipher cipher=null;
+    	byte[] key=null;
+    	Key RSACliente=null;
+    	byte[] RSAClientebyte=null;
+    	
+    	RSAClientebyte=Base64.getDecoder().decode(din.readUTF());
+    	RSACliente=new SecretKeySpec(RSAClientebyte, 0, RSAClientebyte.length, "RSA");
+    	cipher=Cipher.getInstance("RSA/ECB/PKCS1Padding");
+    	cipher.init(Cipher.ENCRYPT_MODE, RSACliente);
+    	key=cipher.doFinal(AESKey.getEncoded());
+    	dout.write(key);
+    	
+    }
+    
 	public boolean login() throws Exception{
 		//leemos las variables por parte del usuario
 		String user=din.readUTF();
@@ -221,6 +271,12 @@ public class DataTransfer extends Thread {
 							if(comando.compareTo("DESCONECTAR")==0){
 								System.out.println("\t DESCONECTAR Comando recibido ...");
 								System.exit(1);
+							}
+							else{
+								if(comando.compareTo("SOLICITARCLAVE")==0){
+									solicitarClave();
+									continue;
+								}
 							}
 						}
 					}
