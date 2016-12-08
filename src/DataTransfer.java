@@ -6,7 +6,7 @@ import javax.net.ssl.HttpsURLConnection;
 public class DataTransfer extends Thread {
 
 	Socket ClientSoc;
-
+	private String nusuario;
 	DataInputStream din;
 	DataOutputStream dout;
 	
@@ -68,7 +68,9 @@ public class DataTransfer extends Thread {
 	void RecibirData() throws Exception
 	{
 		//Lee el mensaje del cliente
-		String archivo=din.readUTF();
+		String[] rutaString=din.readUTF().split("\\");
+		String ruta=rutaString[rutaString.length-1];
+		String archivo="C:\\xampp\\htdocs\\FTPServer\\"+nusuario+"\\"+ruta;
 		
 		//Si el archivo no ha sido encontrado por parte del cliente, entonces acabamos la ejecución
 		if(archivo.compareTo("Archivo no encontrado")==0)
