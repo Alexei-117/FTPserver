@@ -19,11 +19,16 @@ class ClienteTransferData
     DataOutputStream dout;
     BufferedReader br;
     
+    //Cosas Nacho
+    JButton b1=new JButton("Login");
+	JFrame f;
+    
     //Constructor que recibe el socket de la conexion e iniciliza los datos
     public ClienteTransferData(Socket soc)
     {
         try
         {
+        	
             ClientSoc=soc;
             din=new DataInputStream(ClientSoc.getInputStream());
             dout=new DataOutputStream(ClientSoc.getOutputStream());
@@ -160,9 +165,7 @@ class ClienteTransferData
         }
         
     }
-    public class gui{
-    	JButton b1=new JButton("Login");
-    }
+
     public void displayMenu() throws Exception
     {
     	//Menú simple con las opciones básicas de recibir y enviar archivo
@@ -172,7 +175,15 @@ class ClienteTransferData
     	 * */
     	boolean login=true;
     	
-    	
+    	//Cosas Nacho
+    	f=new JFrame();
+		f.setVisible(true);
+		f.setSize(550,400);
+		f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		JPanel p=new JPanel();
+		p.add(b1);
+		
+		f.add(p);
     	
     	//Las entradas de datos
     	System.out.println("[ Login ]");
@@ -182,8 +193,9 @@ class ClienteTransferData
         System.out.println("Inserte la contraseña");
         String pass=br.readLine();
         
-        //Cositas Nacho
-        JPanel p=new JPanel();
+      
+        
+ 
         
         //Envío de la información al servidor
         dout.writeUTF(user);
