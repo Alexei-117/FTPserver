@@ -9,11 +9,13 @@ import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
 import javax.crypto.spec.SecretKeySpec;
 import javax.net.ssl.HttpsURLConnection;
+import java.sql.*;
 
 public class DataTransfer extends Thread {
 
 	Socket ClientSoc;
 	private String nusuario;
+	private String DB_URL = "jdbc:mysql://localhost/FTPServer";
 	DataInputStream din;
 	DataOutputStream dout;
 	
@@ -67,6 +69,19 @@ public class DataTransfer extends Thread {
 			//Lee el archivo del servidor
 			FileInputStream fin=new FileInputStream(f);
 			
+			//Se crea el stream que leerá el dato
+	        DataInputStream data= new DataInputStream(fin);
+	        
+	        //Si hay stream nos dará su tamaño
+	        int tamanyo = data.available();
+	        
+	        //Inicializamos la variable
+	        byte[] b=new byte[tamanyo];
+	        data.readFully(b);
+	        
+	        //Se envía por el dataoutput
+	        dout.write(b);
+			/*
 			//Lo envía de 4 en 4 bytes por el Data Output
 			int ch;
 			do
@@ -75,7 +90,9 @@ public class DataTransfer extends Thread {
 				dout.writeUTF(String.valueOf(ch));
 			}
 			//Cuando llega a final de documento, finaliza
-			while(ch!=-1);    
+			while(ch!=-1);   */
+			
+			data.close();
 			fin.close();    
 			dout.writeUTF("Archivo recibido correctamente");                            
 		}
@@ -119,6 +136,17 @@ public class DataTransfer extends Thread {
 			//Se crea el outputstream que guardará el archivo en el servidor
 			FileOutputStream fout=new FileOutputStream(a);
 			
+	        //Se crea el stream que leerá el dato
+	        DataOutputStream data= new DataOutputStream(fout);
+	        
+	        //Inicializamos la variable leyendo lo que nos pasan
+	        byte[] b=null;
+	        din.read(b);
+	        
+	        //Lo escribimos y cerramos
+	        data.write(b);
+	        
+	        /*
 			//Parámetros locales que leerán el archivo
 			int ch;
 			String temp;
@@ -132,9 +160,11 @@ public class DataTransfer extends Thread {
 					fout.write(ch);                    
 				}
 			}while(ch!=-1);
-			
+			*/
+	        
 			//Una vez acabamos invocamos close para "cerrar" el archivo
 			fout.close();
+			data.close();
 			
 			//Mandamos la señal de que el archivo ha sido enviado correctamente
 			dout.writeUTF("Archivo enviado correctamente");
@@ -181,60 +211,53 @@ public class DataTransfer extends Thread {
     }
     
 	public boolean login() throws Exception{
+		
 		//leemos las variables por parte del usuario
 		String user=din.readUTF();
 		String pass=din.readUTF();
-		
-		//Creamos la url que nos llevará a nuestro servidor local con la base de datos
-		String url = "http://localhost/FTPserver/index.php";
-		URL obj = new URL(url);
-		URLConnection con = obj.openConnection();
-
-		//añade el header al Post, que es la información meta de la petición
-		con.setRequestProperty("Method","POST");
-		con.setRequestProperty("User-Agent", "Mozilla\5.0");
-		con.setRequestProperty("Accept-Language", "en-US,en;q=0.5");
-
-		//aquí añadimos los valores del string que pasaremos por el post
-		String urlParametros = "user="+user+"&pass="+pass;
-
-		// Enviar la petición del post
-		//Primero confirma que se puede realizar dicho envio
-		con.setDoOutput(true);
-		
-		//Genera el output stream para poder escribir en la dirección del post
-		DataOutputStream wr = new DataOutputStream(con.getOutputStream());
-		
-		//Manda los parámetros
-		wr.writeBytes(urlParametros);
-		wr.flush();
-		wr.close();
-
-		//Respuesta por parte de la base de datos/servidor local en valor de int
-		//Supongo que se referirá a error 404 y tal
-		//int respuestaCod = con.getResponseCode();
-		//System.out.println("Señal del servidor : " + respuestaCod);
-
-		//Lee la respuesta generada por el PHP como si fuera una página web
-		BufferedReader in = new BufferedReader(
-		        new InputStreamReader(con.getInputStream()));
-		String linea;
-		StringBuffer respuesta = new StringBuffer();
-
-		while ((linea = in.readLine()) != null) {
-			respuesta.append(linea);
-		}
-		in.close();
-		String login=respuesta.toString();
-		
-		//Ahora tratamos la respuesta por parte del codigo, en este caso,
-		//Si la respuesta es correcta, devolvemos que el login ha sido correcto
 		boolean logueo=false;
-		if(login.contains("Login correcto")){
-			logueo=true;
+		
+		Connection conn=null;
+		Statement envio=null;
+		try{
+		//REgistra el driver JDBC
+		Class.forName("com.mysql.jdbc.Driver");
+		
+		//Creamos la conexión
+		conn = DriverManager.getConnection(DB_URL, "usuarioprueba","prueba");
+		envio = conn.createStatement();
+		
+		//Hacemos la petición
+		ResultSet rs = envio.executeQuery("SELECT * from usuarios WHERE usuarios.nombre='"+user+"' AND usuarios.contra='"+pass+"'");
+		while(rs.next()){
+			if(user.compareTo(rs.getString("nombre"))==0 && pass.compareTo(rs.getString("contra"))==0){
+				logueo=true;
+			}
 		}
 		
-		//Devolvemos el resultado de la comparación
+		rs.close();
+		envio.close();
+		conn.close();
+	   }catch(SQLException se){
+		      //Miramos errores del JDBC
+		      se.printStackTrace();
+	   }catch(Exception e){
+		   //Posibles errores del Class.name
+		   e.printStackTrace();
+	   }finally{
+		   	//últimas comprobaciones
+		   try{
+			   if(envio!=null)
+				   envio.close();
+		   }catch(SQLException se2){
+		   }
+		   try{
+			   if(conn!=null)
+				   conn.close();
+		   }catch(SQLException se){
+			   se.printStackTrace();
+		   }
+	   }
 		return logueo;
 	}
 

@@ -83,7 +83,19 @@ class ClienteTransferData
         //Se crea el stream que leerá el archivo del ordenador a la aplicación
         FileInputStream fin=new FileInputStream(f);
         
-        //Se escribe hasta final de archivo
+        //Se crea el stream que leerá el dato
+        DataInputStream data= new DataInputStream(fin);
+        
+        //Si hay stream nos dará su tamaño
+        int tamanyo = data.available();
+        
+        //Inicializamos la variable
+        byte[] b=new byte[tamanyo];
+        data.readFully(b);
+        
+        //Se envía por el dataoutput
+        dout.write(b);
+        /*
         int ch;
         do
         {
@@ -94,9 +106,11 @@ class ClienteTransferData
             dout.writeUTF(String.valueOf(ch));
         }
         while(ch!=-1);
+        */
         
         //Se cierra el stream del archivo
         fin.close();
+        data.close();
         
         //Se recibe la última confirmación por parte del servidor
         System.out.println(din.readUTF());
@@ -140,7 +154,19 @@ class ClienteTransferData
 	            }
 	            //Se crea un File Output para escribir el archivo recibido en el ordenador
 	            FileOutputStream fout=new FileOutputStream(f);
-	            int ch;
+				
+		        //Se crea el stream que leerá el dato
+		        DataOutputStream data= new DataOutputStream(fout);
+		        
+		        //Inicializamos la variable leyendo lo que nos pasan
+		        byte[] b=null;
+		        din.read(b);
+		        
+		        //Lo escribimos y cerramos
+		        data.write(b);
+		        
+	            
+	            /*int ch;
 	            //string que almacena temporalmente el archivo
 	            String temp;
 	            do
@@ -156,9 +182,12 @@ class ClienteTransferData
 	                }
 	                //Va escribiendo hasta llegar al final
 	            }while(ch!=-1);
+	            */
 	            
 	            //Cierra el stream que conecta con el ordenador
 	            fout.close();
+	            data.close();
+	            
 	            System.out.println(din.readUTF());
 	                
 	        }
