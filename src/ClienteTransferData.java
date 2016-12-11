@@ -281,7 +281,7 @@ class ClienteTransferData
 		
 		JLabel lblNewLabel2=new JLabel("Contraseña");
 		lblNewLabel2.setFont(new Font("Arial", 20, 20));
-		lblNewLabel2.setBounds(125,105,150,20);
+		lblNewLabel2.setBounds(125,100,150,20);
 		frame.getContentPane().add(lblNewLabel2);
     	
 		// Boton
@@ -293,7 +293,11 @@ class ClienteTransferData
 					dout.writeUTF("LOGIN");
 					
 					String user=textField.getText();
-					String pass=textField2.getPassword().toString();
+					char[] passChar=textField2.getPassword();
+					String pass=new String(passChar);
+					
+					System.out.println("pass:"+pass);
+					
 		        	dout.writeUTF(user);
 		        	dout.writeUTF(pass);
 		        	
@@ -309,6 +313,7 @@ class ClienteTransferData
 			        }
 					
 					//Si la respuesta es correcta creamos el menú
+
 					if(login){
 						recibirAES();
 						crearMenu();
@@ -333,14 +338,14 @@ class ClienteTransferData
 				
 				//Fuente del texto//
 				JTextField textField = new JTextField();
-				textField.setBounds(125,52,200,20);
+				textField.setBounds(40,45,350,40);
 				frame.getContentPane().add(textField);
 				textField.setColumns(10);
 				
 				//Label
 				JLabel lblNewLabel=new JLabel("Inserte la ruta del archivo");
-				lblNewLabel.setFont(new Font("Arial", 16, 16));
-				lblNewLabel.setBounds(50,52,100,20);
+				lblNewLabel.setFont(new Font("Arial", 20, 20));
+				lblNewLabel.setBounds(40,20,350,20);
 				frame.getContentPane().add(lblNewLabel);
 				
 				// Boton
@@ -380,16 +385,16 @@ class ClienteTransferData
 					}
 				});
 				
-				buttonEnviar.setFont(new Font("Arial", Font.BOLD, 12));
-				buttonEnviar.setBounds(150, 144, 123, 52);
+				buttonEnviar.setFont(new Font("Arial", Font.BOLD, 20));
+				buttonEnviar.setBounds(60, 100, 123, 52);
 				frame.getContentPane().add(buttonEnviar);
 				
-				buttonRecibir.setFont(new Font("Arial", Font.BOLD, 12));
-				buttonRecibir.setBounds(150, 144, 123, 152);
+				buttonRecibir.setFont(new Font("Arial", Font.BOLD, 20));
+				buttonRecibir.setBounds(240, 100, 123, 52);
 				frame.getContentPane().add(buttonRecibir);
 				
-				buttonSalir.setFont(new Font("Arial", Font.BOLD, 12));
-				buttonSalir.setBounds(150, 144, 123, 252);
+				buttonSalir.setFont(new Font("Arial", Font.BOLD, 20));
+				buttonSalir.setBounds(155, 180, 123, 52);
 				frame.getContentPane().add(buttonSalir);
 				
 				frame.setVisible(true);
