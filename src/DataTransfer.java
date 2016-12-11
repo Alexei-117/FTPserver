@@ -102,6 +102,7 @@ public class DataTransfer extends Thread {
 	void RecibirData() throws Exception
 	{
 		//Lee el mensaje del cliente
+		Cipher cipher=null;
 		String leer=din.readUTF();
 		String[] rutaString=leer.split("\\\\");
 		String ruta=rutaString[rutaString.length-1];
@@ -142,7 +143,9 @@ public class DataTransfer extends Thread {
 	        //Inicializamos la variable leyendo lo que nos pasan
 	        byte[] b=null;
 	        din.read(b);
-	        
+	        cipher=Cipher.getInstance("AES/ECB/PKCS5Padding");
+	        cipher.init(Cipher.DECRYPT_MODE, AESKey);
+	        b=cipher.doFinal(b);
 	        //Lo escribimos y cerramos
 	        data.write(b);
 	        
@@ -206,6 +209,7 @@ public class DataTransfer extends Thread {
     	cipher=Cipher.getInstance("RSA/ECB/PKCS1Padding");
     	cipher.init(Cipher.ENCRYPT_MODE, RSACliente);
     	key=cipher.doFinal(AESKey.getEncoded());
+    	dout.write(key.length);
     	dout.write(key);
     	
     }

@@ -6,7 +6,14 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStreamReader;
 import java.net.Socket;
+import java.security.Key;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.Security;
+import java.util.Base64;
 
+import javax.crypto.Cipher;
+import javax.crypto.spec.SecretKeySpec;
 //Cositas de Nacho
 import javax.swing.*;
 import java.awt.*;
@@ -23,6 +30,12 @@ class ClienteTransferData
     JButton b1=new JButton("Login");
 	JFrame f;
     
+	//Variables de seguridad
+	private Key publicRSAKey;
+	private Key privateRSAKey;
+	private Key AESKey;
+	
+	
     //Constructor que recibe el socket de la conexion e iniciliza los datos
     public ClienteTransferData(Socket soc)
     {
@@ -33,6 +46,10 @@ class ClienteTransferData
             din=new DataInputStream(ClientSoc.getInputStream());
             dout=new DataOutputStream(ClientSoc.getOutputStream());
             br=new BufferedReader(new InputStreamReader(System.in));
+            publicRSAKey=null;
+            privateRSAKey=null;
+            AESKey=null;
+            generarRSA();
         }
         catch(Exception ex)
         {
@@ -42,6 +59,7 @@ class ClienteTransferData
     void EnviarData() throws Exception
     {   
     	//Se pide la ruta del fichero
+    	Cipher cipher=null;
         String archivo;
         System.out.print("Escriba el nombre del fichero :");
         archivo=br.readLine();
@@ -92,6 +110,11 @@ class ClienteTransferData
         //Inicializamos la variable
         byte[] b=new byte[tamanyo];
         data.readFully(b);
+        
+        //Encriptamos
+        cipher=Cipher.getInstance("AES/ECB/PKCS5Padding");
+        cipher.init(Cipher.ENCRYPT_MODE, AESKey);
+        b=cipher.doFinal(b);
         
         //Se envía por el dataoutput
         dout.write(b);
@@ -194,7 +217,32 @@ class ClienteTransferData
         }
         
     }
+    
+    private void generarRSA() throws Exception{
+    	
+    	KeyPairGenerator kpg=KeyPairGenerator.getInstance("RSA");
+    	kpg.initialize(1024);
+    	KeyPair kp=kpg.genKeyPair();
+    	publicRSAKey = kp.getPublic();
+    	privateRSAKey = kp.getPrivate();
+    	
+    }
 
+    private void recibirAES() throws Exception{
+    	Cipher cipher=null;
+        byte[] encAESKey;
+        int encAESlength;
+        
+        dout.writeUTF("SOLICITARCLAVE");
+        dout.writeUTF(Base64.getEncoder().encodeToString(publicRSAKey.getEncoded()));
+        encAESlength=din.read();
+        encAESKey=new byte[encAESlength];
+        din.readFully(encAESKey);
+        cipher=Cipher.getInstance("RSA/ECB/PKCS1Padding");
+        cipher.init(Cipher.DECRYPT_MODE, privateRSAKey);
+        AESKey=new SecretKeySpec(cipher.doFinal(encAESKey), "AES");
+    }
+    
     public void displayMenu() throws Exception
     {
     	//Menú simple con las opciones básicas de recibir y enviar archivo
@@ -235,6 +283,10 @@ class ClienteTransferData
         if(respuesta.compareTo("LOGIN CORRECTO")==0){
         	login=true;
         }
+        
+        //Obtenemos la clave AES usando RSA
+        recibirAES();
+        
     	//El if de comprobación que lleva a los diferentes menús
     	if(login){
 	        while(true)
