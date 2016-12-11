@@ -109,15 +109,18 @@ class ClienteTransferData
         
         //Inicializamos la variable
         byte[] b=new byte[tamanyo];
+        byte[] enc=null;
         data.readFully(b);
         
         //Encriptamos
         cipher=Cipher.getInstance("AES/ECB/PKCS5Padding");
         cipher.init(Cipher.ENCRYPT_MODE, AESKey);
-        b=cipher.doFinal(b);
+        enc=cipher.doFinal(b);
         
+        System.out.println(b);
+        System.out.println(enc);
         //Se envía por el dataoutput
-        dout.write(b);
+        dout.write(enc);
         /*
         int ch;
         do
