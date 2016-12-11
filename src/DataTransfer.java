@@ -208,8 +208,6 @@ public class DataTransfer extends Thread {
     	Key RSACliente=null;
     	byte[] RSAClientebyte=null;
     	
-    	
-    	System.out.println(AESKey.getEncoded());
     	RSAClientebyte=Base64.getDecoder().decode(din.readUTF());
     	RSACliente=KeyFactory.getInstance("RSA").generatePublic(new X509EncodedKeySpec(RSAClientebyte));
     	cipher=Cipher.getInstance("RSA/ECB/PKCS1Padding");
@@ -282,12 +280,11 @@ public class DataTransfer extends Thread {
 				System.out.println("Esperando comando ...");
 				String comando=din.readUTF();
 				if(comando.compareTo("LOGIN")==0){
-					System.out.println("\t RECOGER Comando recibido ...");
+					System.out.println("\t LOGIN Comando recibido ...");
 					if(login()){
 						dout.writeUTF("LOGIN CORRECTO");
 					}else{
 						dout.writeUTF("LOGIN FALLIDO");
-						System.exit(1);
 					}
 					continue;
 				}else{

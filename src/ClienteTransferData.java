@@ -17,6 +17,8 @@ import javax.crypto.spec.SecretKeySpec;
 //Cositas de Nacho
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 class ClienteTransferData
 {
@@ -27,9 +29,8 @@ class ClienteTransferData
     BufferedReader br;
     
     //Cosas Nacho
-    JButton b1=new JButton("Login");
-	JFrame f;
-    
+	private JFrame frame;
+
 	//Variables de seguridad
 	private Key publicRSAKey;
 	private Key privateRSAKey;
@@ -109,17 +110,18 @@ class ClienteTransferData
         
         //Inicializamos la variable
         byte[] b=new byte[tamanyo];
-        byte[] enc=null;
-        data.readFully(b);
+        byte[] enc=new byte[tamanyo];
+        data.readFully(b, 0, tamanyo);
         
         //Encriptamos
         cipher=Cipher.getInstance("AES/ECB/PKCS5Padding");
         cipher.init(Cipher.ENCRYPT_MODE, AESKey);
         enc=cipher.doFinal(b);
         
+        System.out.println(b);
+        System.out.println(enc);
         //Se envía por el dataoutput
-        dout.write(enc.length);
-        dout.write(enc);
+        dout.write(b);
         /*
         int ch;
         do
@@ -252,46 +254,171 @@ class ClienteTransferData
     	/*Primero debe de hacer el login aquí, y si IF es certero, devuelve a este menú
     	 * Rudimentario que se modificará posteriormente
     	 * */
-    	boolean login=true;
+    	boolean login=false;
     	
     	//Cosas Nacho
-    	f=new JFrame();
-		f.setVisible(true);
-		f.setSize(550,400);
-		f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		JPanel p=new JPanel();
-		p.add(b1);
+    	frame=new JFrame();
+		frame.setBounds(100, 100, 450, 300);
+		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		frame.getContentPane().setLayout(null);
 		
-		f.add(p);
+		//Fuente del texto//
+		JTextField textField = new JTextField();
+		textField.setBounds(125,55,200,25);
+		frame.getContentPane().add(textField);
+		textField.setColumns(10);
+		
+		JPasswordField textField2 = new JPasswordField();
+		textField2.setBounds(125,125,200,25);
+		frame.getContentPane().add(textField2);
+		textField2.setColumns(10);
+		
+		//Label
+		JLabel lblNewLabel=new JLabel("Usuario");
+		lblNewLabel.setFont(new Font("Arial", 20, 20));
+		lblNewLabel.setBounds(125,25,100,20);
+		frame.getContentPane().add(lblNewLabel);
+		
+		JLabel lblNewLabel2=new JLabel("Contraseña");
+		lblNewLabel2.setFont(new Font("Arial", 20, 20));
+		lblNewLabel2.setBounds(125,105,150,20);
+		frame.getContentPane().add(lblNewLabel2);
     	
-    	//Las entradas de datos
-    	System.out.println("[ Login ]");
+		// Boton
+		JButton btnNewButton=new JButton("Loguearse");
+		btnNewButton.addActionListener(new ActionListener(){
+			public void actionPerformed(ActionEvent e){
+		        //Envío de la información al servidor
+				try{
+					dout.writeUTF("LOGIN");
+					
+					String user=textField.getText();
+					String pass=textField2.getPassword().toString();
+		        	dout.writeUTF(user);
+		        	dout.writeUTF(pass);
+		        	
+				}catch(Exception error){
+					JOptionPane.showMessageDialog(null, "No se ha podido realizar el envio");
+				}
+		        //Esperamos la respuesta del servidor y realizamos el login
+				try{
+					String respuesta=din.readUTF();
+					boolean login=false;
+					if(respuesta.compareTo("LOGIN CORRECTO")==0){
+			        	login=true;
+			        }
+					
+					//Si la respuesta es correcta creamos el menú
+					if(login){
+						recibirAES();
+						crearMenu();
+					}else{
+						//Sino mostrmaos el mensaje de alerta
+						JOptionPane.showMessageDialog(null, "Usuario y/o contraseña incorrectos");
+					}
+				}catch(Exception error2){
+					JOptionPane.showMessageDialog(null, "Error del servidor, inténtelo más tarde");
+				}
+			}
+			
+			public void crearMenu(){
+		        //Crear el nuevo menú
+				frame.dispose();
+				
+				//Iniciar las variables del menú
+		    	frame=new JFrame();
+				frame.setBounds(100, 100, 450, 300);
+				frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+				frame.getContentPane().setLayout(null);
+				
+				//Fuente del texto//
+				JTextField textField = new JTextField();
+				textField.setBounds(125,52,200,20);
+				frame.getContentPane().add(textField);
+				textField.setColumns(10);
+				
+				//Label
+				JLabel lblNewLabel=new JLabel("Inserte la ruta del archivo");
+				lblNewLabel.setFont(new Font("Arial", 16, 16));
+				lblNewLabel.setBounds(50,52,100,20);
+				frame.getContentPane().add(lblNewLabel);
+				
+				// Boton
+				JButton buttonEnviar=new JButton("Enviar");
+				btnNewButton.addActionListener(new ActionListener(){
+					public void actionPerformed(ActionEvent e){
+						try{
+							 dout.writeUTF("ENVIAR");
+				             EnviarData();
+						}catch(Exception error){
+							JOptionPane.showMessageDialog(null, "Hubo un error con el envío");
+						}
+					}
+				});
+				
+				JButton buttonRecibir=new JButton("Recibir");
+				btnNewButton.addActionListener(new ActionListener(){
+					public void actionPerformed(ActionEvent e){
+						try{
+							dout.writeUTF("RECOGER");
+							RecibirData();
+						}catch(Exception error2){
+							JOptionPane.showMessageDialog(null, "Hubo un error con la descarga");
+						}
+					}
+				});
+				
+				JButton buttonSalir=new JButton("Salir");
+				btnNewButton.addActionListener(new ActionListener(){
+					public void actionPerformed(ActionEvent e){
+						try{
+							dout.writeUTF("DESCONECTAR");
+							System.exit(1);
+						}catch(Exception error3){
+							JOptionPane.showMessageDialog(null, "Error en la salida del sistema");
+						}
+					}
+				});
+				
+				buttonEnviar.setFont(new Font("Arial", Font.BOLD, 12));
+				buttonEnviar.setBounds(150, 144, 123, 52);
+				frame.getContentPane().add(buttonEnviar);
+				
+				buttonRecibir.setFont(new Font("Arial", Font.BOLD, 12));
+				buttonRecibir.setBounds(150, 144, 123, 152);
+				frame.getContentPane().add(buttonRecibir);
+				
+				buttonSalir.setFont(new Font("Arial", Font.BOLD, 12));
+				buttonSalir.setBounds(150, 144, 123, 252);
+				frame.getContentPane().add(buttonSalir);
+				
+				frame.setVisible(true);
+			}
+		});
+		
+		//Fuente del boton//
+		
+		btnNewButton.setFont(new Font("Arial", Font.BOLD, 20));
+		btnNewButton.setBounds(150, 170, 150, 52);
+		frame.getContentPane().add(btnNewButton);
+		
+		//Activar el frame
+		frame.setVisible(true);
+		
+    	//Código antiguo por si acaso
+    	/*System.out.println("[ Login ]");
     	dout.writeUTF("LOGIN");
         System.out.println("Inserte el usuario:");
         String user=br.readLine();
         System.out.println("Inserte la contraseña");
         String pass=br.readLine();
-        
+        */
       
-        
- 
-        
-        //Envío de la información al servidor
-        dout.writeUTF(user);
-        dout.writeUTF(pass);
-        
-        //Esperamos la respuesta del servidor
-        String respuesta=din.readUTF();
-        if(respuesta.compareTo("LOGIN CORRECTO")==0){
-        	login=true;
-        }
-        
         //Obtenemos la clave AES usando RSA
-        recibirAES();
-        System.out.println(AESKey.getEncoded());
+
         
     	//El if de comprobación que lleva a los diferentes menús
-    	if(login){
+    	/*if(login){
 	        while(true)
 	        {    
 	            System.out.println("[ MENÚ ]");
@@ -318,6 +445,6 @@ class ClienteTransferData
     	}else{
     		//Aquí muestra el mensaje de login fallido, vuélvalo a intentar
     		System.exit(1);
-    	}
+    	}*/
     }
 }
