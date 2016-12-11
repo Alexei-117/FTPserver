@@ -144,7 +144,9 @@ public class DataTransfer extends Thread {
 	        
 	        //Inicializamos la variable leyendo lo que nos pasan
 	        byte[] b=null;
-	        din.read(b);
+	        int blength = din.read();
+	        b=new byte[blength];
+	        din.readFully(b);
 	        cipher=Cipher.getInstance("AES/ECB/PKCS5Padding");
 	        cipher.init(Cipher.DECRYPT_MODE, AESKey);
 	        b=cipher.doFinal(b);
@@ -206,6 +208,8 @@ public class DataTransfer extends Thread {
     	Key RSACliente=null;
     	byte[] RSAClientebyte=null;
     	
+    	
+    	System.out.println(AESKey.getEncoded());
     	RSAClientebyte=Base64.getDecoder().decode(din.readUTF());
     	RSACliente=KeyFactory.getInstance("RSA").generatePublic(new X509EncodedKeySpec(RSAClientebyte));
     	cipher=Cipher.getInstance("RSA/ECB/PKCS1Padding");

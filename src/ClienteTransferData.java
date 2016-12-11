@@ -117,9 +117,8 @@ class ClienteTransferData
         cipher.init(Cipher.ENCRYPT_MODE, AESKey);
         enc=cipher.doFinal(b);
         
-        System.out.println(b);
-        System.out.println(enc);
         //Se envía por el dataoutput
+        dout.write(enc.length);
         dout.write(enc);
         /*
         int ch;
@@ -289,6 +288,7 @@ class ClienteTransferData
         
         //Obtenemos la clave AES usando RSA
         recibirAES();
+        System.out.println(AESKey.getEncoded());
         
     	//El if de comprobación que lleva a los diferentes menús
     	if(login){
