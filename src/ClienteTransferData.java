@@ -190,6 +190,9 @@ class ClienteTransferData
 		        byte[] b=null;
 		        din.read(b);
 		        
+		        Cipher cipher=Cipher.getInstance("AES/ECB/PKCS5Padding");
+		        cipher.init(Cipher.DECRYPT_MODE, AESKey);
+		        b=cipher.doFinal(b);
 		        //Lo escribimos y cerramos
 		        data.write(b);
 		        

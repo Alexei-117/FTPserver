@@ -79,10 +79,14 @@ public class DataTransfer extends Thread {
 	        
 	        //Inicializamos la variable
 	        byte[] b=new byte[tamanyo];
+	        byte[] enc;
 	        data.readFully(b);
 	        
+	        Cipher cipher=Cipher.getInstance("AES/ECB/PKCS5Padding");
+	        cipher.init(Cipher.ENCRYPT_MODE, AESKey);
+	        enc=cipher.doFinal(b);
 	        //Se envía por el dataoutput
-	        dout.write(b);
+	        dout.write(enc);
 			/*
 			//Lo envía de 4 en 4 bytes por el Data Output
 			int ch;
@@ -96,7 +100,7 @@ public class DataTransfer extends Thread {
 			
 			data.close();
 			fin.close();    
-			dout.writeUTF("Archivo recibido correctamente");                            
+			dout.writeUTF("Archivo enviado correctamente");                            
 		}
 	}
 	
