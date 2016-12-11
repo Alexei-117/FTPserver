@@ -52,8 +52,9 @@ public class DataTransfer extends Thread {
 	void EnviarData() throws Exception
 	{       
 		//Lee el directorio del archivo
-		String archivo=din.readUTF();
-		
+		String nomArchivo=din.readUTF();
+		String archivo="C:\\xampp\\htdocs\\FTPserver\\"+nusuario+"\\"+nomArchivo;
+		System.out.println(archivo+ ", "+nomArchivo);
 		//Crea la ruta abstracta que carga el archivo
 		File f=new File(archivo);
 		
@@ -86,6 +87,7 @@ public class DataTransfer extends Thread {
 	        cipher.init(Cipher.ENCRYPT_MODE, AESKey);
 	        enc=cipher.doFinal(b);
 	        //Se envía por el dataoutput
+	        dout.write(enc.length);
 	        dout.write(enc);
 			/*
 			//Lo envía de 4 en 4 bytes por el Data Output
@@ -112,7 +114,12 @@ public class DataTransfer extends Thread {
 		String leer=din.readUTF();
 		String[] rutaString=leer.split("\\\\");
 		String ruta=rutaString[rutaString.length-1];
-		String archivo="C:\\xampp\\htdocs\\FTPServer\\"+ruta;
+		
+		File carpeta = new File("C:\\xampp\\htdocs\\FTPServer\\"+nusuario+"\\");
+		if(!carpeta.exists()){
+			carpeta.mkdir();
+		}
+		String archivo="C:\\xampp\\htdocs\\FTPServer\\"+nusuario+"\\"+ruta;
 		
 		//Si el archivo no ha sido encontrado por parte del cliente, entonces acabamos la ejecución
 		if(leer.compareTo("Archivo no encontrado")==0)
@@ -250,6 +257,7 @@ public class DataTransfer extends Thread {
 		while(rs.next()){
 			if(user.compareTo(rs.getString("nombre"))==0 && password.compareTo(rs.getString("contra"))==0){
 				logueo=true;
+				nusuario=user;
 			}
 		}
 		

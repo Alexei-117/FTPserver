@@ -58,13 +58,13 @@ class ClienteTransferData
         }        
     }
     //Función que recibe los datos
-    void EnviarData() throws Exception
+    void EnviarData(String a) throws Exception
     {   
     	//Se pide la ruta del fichero
     	Cipher cipher=null;
         String archivo;
         System.out.print("Escriba el nombre del fichero :");
-        archivo=br.readLine();
+        archivo=a;
         
         //Se crea el objeto fichero y se verifica su existencia
         File f=new File(archivo);
@@ -111,18 +111,16 @@ class ClienteTransferData
         
         //Inicializamos la variable
         byte[] b=new byte[tamanyo];
-        byte[] enc=new byte[tamanyo];
-        data.readFully(b, 0, tamanyo);
+        byte[] enc=null;
+        data.readFully(b);
         
         //Encriptamos
         cipher=Cipher.getInstance("AES/ECB/PKCS5Padding");
         cipher.init(Cipher.ENCRYPT_MODE, AESKey);
         enc=cipher.doFinal(b);
-        
-        System.out.println(b);
-        System.out.println(enc);
         //Se envía por el dataoutput
-        dout.write(b);
+        dout.write(enc.length);
+        dout.write(enc);
         /*
         int ch;
         do
@@ -145,11 +143,11 @@ class ClienteTransferData
         
     }
     
-    void RecibirData() throws Exception
+    void RecibirData(String a) throws Exception
     {
         String archivo;
         System.out.print("Escriba el nombre del fichero :");
-        archivo=br.readLine();
+        archivo=a;
         //Lee el nombre del fichero y la envía al servidor
         dout.writeUTF(archivo);
         
@@ -164,10 +162,20 @@ class ClienteTransferData
         	//Espera a la confirmación del servidor de que el archivo está listo
         	if(msgDeServer.compareTo("Preparado")==0){
 	            System.out.println("Recibiendo Archivo ...");
+	            
+	            //Reenrutamiento hacia una carpeta creada localmente
+	            String[] rutaString=archivo.split("\\\\");
+	            String ruta=rutaString[rutaString.length-1];
+	            //Creación de carpeta de reenrutamiento
+	            File carpeta=new File("C:\\descarga\\");
+	            if(!carpeta.exists()){
+	            	carpeta.mkdir();
+	            }
+	            archivo="C:\\descarga\\"+ruta;
 	            File f=new File(archivo);
 	            
 	            //Si el archivo ya existe
-	            if(f.exists())
+	            /*if(f.exists())
 	            {
 	                String opcion;
 	                System.out.println("El archivo ya existe. ¿Desea sobreescribirlo (S/N) ?");
@@ -179,7 +187,9 @@ class ClienteTransferData
 	                    dout.flush();
 	                    return;    
 	                }                
-	            }
+	            }*/
+	            
+	            
 	            //Se crea un File Output para escribir el archivo recibido en el ordenador
 	            FileOutputStream fout=new FileOutputStream(f);
 				
@@ -187,7 +197,8 @@ class ClienteTransferData
 		        DataOutputStream data= new DataOutputStream(fout);
 		        
 		        //Inicializamos la variable leyendo lo que nos pasan
-		        byte[] b=null;
+		        int tamanyo=din.read();
+		        byte[] b=new byte[tamanyo];
 		        din.read(b);
 		        
 		        Cipher cipher=Cipher.getInstance("AES/ECB/PKCS5Padding");
@@ -362,37 +373,38 @@ class ClienteTransferData
 				
 				// Boton
 				JButton buttonEnviar=new JButton("Enviar");
-				btnNewButton.addActionListener(new ActionListener(){
+				buttonEnviar.addActionListener(new ActionListener(){
 					public void actionPerformed(ActionEvent e){
 						try{
 							 dout.writeUTF("ENVIAR");
-				             EnviarData();
+				             EnviarData(textField.getText());
 						}catch(Exception error){
-							JOptionPane.showMessageDialog(null, "Hubo un error con el envío");
+							JOptionPane.showMessageDialog(null, "Hubo un error con el envío: "+error);
 						}
 					}
 				});
 				
 				JButton buttonRecibir=new JButton("Recibir");
-				btnNewButton.addActionListener(new ActionListener(){
+				buttonRecibir.addActionListener(new ActionListener(){
 					public void actionPerformed(ActionEvent e){
 						try{
 							dout.writeUTF("RECOGER");
-							RecibirData();
+							RecibirData(textField.getText());
 						}catch(Exception error2){
-							JOptionPane.showMessageDialog(null, "Hubo un error con la descarga");
+							JOptionPane.showMessageDialog(null, "Hubo un error con la descarga: "+error2);
 						}
 					}
 				});
 				
 				JButton buttonSalir=new JButton("Salir");
-				btnNewButton.addActionListener(new ActionListener(){
+				buttonSalir.addActionListener(new ActionListener(){
 					public void actionPerformed(ActionEvent e){
 						try{
 							dout.writeUTF("DESCONECTAR");
+							frame.dispose();
 							System.exit(1);
 						}catch(Exception error3){
-							JOptionPane.showMessageDialog(null, "Error en la salida del sistema");
+							JOptionPane.showMessageDialog(null, "Error en la salida del sistema: "+error3);
 						}
 					}
 				});
