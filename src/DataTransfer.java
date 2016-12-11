@@ -1,7 +1,9 @@
 import java.net.*;
 import java.security.Key;
+import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
+import java.security.spec.X509EncodedKeySpec;
 import java.io.*;
 import java.util.*;
 
@@ -205,7 +207,7 @@ public class DataTransfer extends Thread {
     	byte[] RSAClientebyte=null;
     	
     	RSAClientebyte=Base64.getDecoder().decode(din.readUTF());
-    	RSACliente=new SecretKeySpec(RSAClientebyte, 0, RSAClientebyte.length, "RSA");
+    	RSACliente=KeyFactory.getInstance("RSA").generatePublic(new X509EncodedKeySpec(RSAClientebyte));
     	cipher=Cipher.getInstance("RSA/ECB/PKCS1Padding");
     	cipher.init(Cipher.ENCRYPT_MODE, RSACliente);
     	key=cipher.doFinal(AESKey.getEncoded());
