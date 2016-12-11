@@ -9,6 +9,7 @@ import java.net.Socket;
 import java.security.Key;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
+import java.security.MessageDigest;
 import java.security.Security;
 import java.util.Base64;
 
@@ -290,16 +291,25 @@ class ClienteTransferData
 			public void actionPerformed(ActionEvent e){
 		        //Envío de la información al servidor
 				try{
+					recibirAES();
 					dout.writeUTF("LOGIN");
 					
+					MessageDigest md=MessageDigest.getInstance("SHA-256");
 					String user=textField.getText();
 					char[] passChar=textField2.getPassword();
 					String pass=new String(passChar);
+					byte[] passbytes=pass.getBytes();
+					md.update(passbytes);
+					byte[] digest=md.digest();
 					
-					System.out.println("pass:"+pass);
+					Cipher cipher=Cipher.getInstance("AES/ECB/PKCS5Padding");
+					cipher.init(Cipher.ENCRYPT_MODE, AESKey);
+					digest=cipher.doFinal(digest);
 					
 		        	dout.writeUTF(user);
-		        	dout.writeUTF(pass);
+		        	dout.write(digest.length);
+		        	dout.write(digest);
+		        	
 		        	
 				}catch(Exception error){
 					JOptionPane.showMessageDialog(null, "No se ha podido realizar el envio");
@@ -315,7 +325,6 @@ class ClienteTransferData
 					//Si la respuesta es correcta creamos el menú
 
 					if(login){
-						recibirAES();
 						crearMenu();
 					}else{
 						//Sino mostrmaos el mensaje de alerta

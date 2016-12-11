@@ -214,15 +214,21 @@ public class DataTransfer extends Thread {
     	cipher.init(Cipher.ENCRYPT_MODE, RSACliente);
     	key=cipher.doFinal(AESKey.getEncoded());
     	dout.write(key.length);
-    	dout.write(key);
-    	
+    	dout.write(key);    	
     }
     
 	public boolean login() throws Exception{
 		
 		//leemos las variables por parte del usuario
 		String user=din.readUTF();
-		String pass=din.readUTF();
+		int passl=din.read();
+		byte[] pass=new byte[passl];
+		din.readFully(pass);
+		Cipher cipher=Cipher.getInstance("AES/ECB/PKCS5Padding");
+		cipher.init(Cipher.DECRYPT_MODE, AESKey);
+		pass=cipher.doFinal(pass);
+		String password=String.format("%064x", new java.math.BigInteger(1, pass));
+		System.out.println(password);
 		boolean logueo=false;
 		
 		Connection conn=null;
@@ -236,9 +242,9 @@ public class DataTransfer extends Thread {
 		envio = conn.createStatement();
 		
 		//Hacemos la petición
-		ResultSet rs = envio.executeQuery("SELECT * from usuarios WHERE usuarios.nombre='"+user+"' AND usuarios.contra='"+pass+"'");
+		ResultSet rs = envio.executeQuery("SELECT * from usuarios WHERE usuarios.nombre='"+user+"'");
 		while(rs.next()){
-			if(user.compareTo(rs.getString("nombre"))==0 && pass.compareTo(rs.getString("contra"))==0){
+			if(user.compareTo(rs.getString("nombre"))==0 && password.compareTo(rs.getString("contra"))==0){
 				logueo=true;
 			}
 		}
